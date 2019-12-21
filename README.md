@@ -1,4 +1,292 @@
+## 三体音视频SDK防止混淆配置
+ * -keep class ttt.ijk.media.**{*;}
+ * -keep class project.android.imageprocessing.**{*;}
+ * -keep class org.TTTRtc.voiceengine.**{*;}
+ * -keep class com.wushuangtech.**{*;}
+ * -dontwarn ttt.ijk.media.**
+
 ## 三体音视频SDK发版说明
+
+### 2.5.0版本
+该版本于2019年12月21日发布。
+
+## 类 TTTRtcEngine API 变更
+
+### API 删除
+1.**enableUplinkAccelerate** 接口已不再支持。
+
+### API 变更
+1.调整 **setPreferAudioCodec** 接口的参数取值范围。
+
+```
+/**
+ * 设置音频编码参数。
+ * <p/>
+ * 默认 SDK 使用 ISAC 格式，适用于通话场景，而在对音质需求高的直播场景，推荐使用 AAC 或 OPUS，显式调用该 API 变更。
+ * <p/>
+ * 使用注意：<br/>
+ * 1.该方法需要在 joinChannel(加入频道) 之前设置好，joinChannel 后设置不生效。<br/>
+ * 2.若使用 startRecordScreenAndSave(屏幕录制) 或 startRecordScreen(屏幕共享) API，则必须使用 AAC 。
+ * <p/>
+ *
+ * @param codecType 音频编码格式，支持的类型如下：<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_AAC}<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_ISAC}<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_OPUS}<br/>
+ * @param bitrate   音频编码码率，范围如下：<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_AAC}  码率范围48kbps ~ 128kbps<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_ISAC} 码率范围16kbps ~ 32kbps<br/>
+ *                  {@link Constants#TTT_AUDIO_CODEC_OPUS} 码率范围16kbps ~ 128kbps<br/>
+ * @param channels  声道数，支持单声道和双声道，参数范围是1 ~ 2
+ *                  <p/>
+ * @return 0 代表方法调用成功，其他代表失败。<br/>
+ * ERROR_FUNCTION_INVOKE_ERROR -4 ：已加入频道，调用会失败。<br/>
+ * ERROR_FUNCTION_ERROR_ARGS -5 ：传递的参数有问题，比如所设置的音频编码格式、码率大小、或声道数不支持。
+ */
+public abstract int setPreferAudioCodec(int codecType, int bitrate, int channels);
+```
+
+2.调整 **startAudioMixing** 接口，增加对 **assets** 文件夹内的文件访问，调整 **cycle** 参数的取值。
+
+```
+/**
+ * 开始播放音乐文件及混音。
+ * <p/>
+ * 该 API 指定本地或在线音频文件来和麦克风采集的音频流进行混音或替换，替换是指用音频文件替换麦克风采集的音频流，并且可以选择是否让对方听到本地播放的音频，
+ * 并指定循环播放的次数。
+ * <p/>
+ * 成功调用后，当播放结束，会收到 {@link TTTRtcEngineEventHandler#onAudioMixingPlayFinish} 回调通知调用者音乐播放完毕。
+ *
+ * @param filePath 指定需要混音的本地音频文件名和文件路径。支持以下音频格式：mp3, mp4, aac, m4a, wav, flac。<br/>
+ *                 如果用户提供的目录以 /assets/ 开头，则去 assets 里面查找该文件。<br/>
+ *                 如果用户提供的目录不是以 /assets/ 开头，一律认为是在绝对路径里查找该文件。
+ * @param loopback true：只有本地可以听到混音或替换后的音频流，false：本地和对方都可以听到混音或替换后的音频流。
+ * @param replace  true：音频文件内容将会替换本地录音的音频流，false：音频文件内容将会和麦克风采集的音频流进行混音。
+ * @param cycle    指定音频文件循环播放的次数，从 1 开始，0 无效。<br/>
+ *                 正整数：循环的次数。<br/>
+ *                 -1：无限循环。
+ *                 <p/>
+ * @return 0 代表方法调用成功，其他代表失败。<br/>
+ * ERROR_FUNCTION_INVOKE_ERROR -4 ：调用失败，原因未知，请尝试重新调用。<br/>
+ * ERROR_FUNCTION_ERROR_ARGS -5 ：参数有问题。<br/>
+ * 1.可能是音乐文件路径不对或不存在。<br/>
+ * 2.循环次数错误，只能是正整数或-1。
+ */
+public abstract int startAudioMixing(String filePath, boolean loopback, boolean replace, int cycle);
+```
+
+#-------------------------------------------
+
+### 2.4.0版本
+该版本于2019年10月24日发布。
+## API TTTRtcEngine 接口变更
+### 新增以下方法
+```
+/**
+ * 停止/恢复音频采集和播放功能
+ *
+ * @param stop YES: 停止采集和播放  NO: 恢复采集和播放
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int stopAudioPlayAndRecord(boolean stop);
+
+/**
+ * 启用/禁用本地和远端音频混音后的裸数据上报，默认禁用
+ *
+ * @param enabled true代表启用上报，false代表禁用上报
+ */
+public abstract void enableMixAudioDataReport(boolean enabled);
+
+/**
+ * 设置上报的本地音频裸数据的采样率，声道数和采样点数
+ *
+ * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
+ * @param channel        声道数，最多支持两个声道
+ * @param samplesPerCall 采样点数
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int setRecordingAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
+
+/**
+ * 设置上报的远端音频裸数据的采样率，声道数和采样点数
+ *
+ * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
+ * @param channel        声道数，最多支持两个声道
+ * @param samplesPerCall 采样点数
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int setPlaybackAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
+
+/**
+ * 设置上报的本地和远端音频裸数据，经过混音后数据的采样率，声道数和采样点数
+ *
+ * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
+ * @param channel        声道数，最多支持两个声道
+ * @param samplesPerCall 采样点数
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int setMixedAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
+
+/**
+ * 增加旁路推流地址。SDK 会在本地触发 onRtcPushStatus 回调，报告增加旁路推流地址的状态
+ *
+ * @param url 旁路推流地址
+ * @param transcodingEnabled 是否转码
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int addPublishStreamUrl(String url, boolean transcodingEnabled);
+
+/**
+ * 删除旁路推流地址。SDK 会在本地触发 onRtcPushStatus 回调，报告删除旁路推流地址的状态
+ * @param url 旁路推流地址
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int removePublishStreamUrl(String url);
+
+/**
+ * 设置视频混屏的背景图片，默认是黑色背景。图片源仅支持http协议的网络地址，不支持本地图片路径，图片格式支持主流的jpg，png等<br/>
+ * 注意:该接口是多旁路推流功能的版本，单推流的版本无 streamUrl 参数
+ *
+ * @param url 背景图片所在的地址
+ * @param streamUrl 旁路推流地址
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int setVideoMixerBackgroundImgUrl(String url, String streamUrl);
+
+/**
+ * 发送伴奏歌曲的歌词信息
+ * @param lyric 歌词内容
+ *
+ * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
+ */
+public abstract int sendAudioLyric(String lyric);
+
+```
+
+## API TTTRtcEngineEventHandler 回调接口变更
+### 接口变更
+
+1. 以下回调接口列表，会在**参数列表末尾**添加 **int elapsed** 参数，表示当前回调自加入房间起，到触发该回调所用的时间，**单位秒**，例如：
+ 
+	```
+	public void onJoinChannelSuccess(String channel, long uid, int elapsed) {
+	```
+	onJoinChannelSuccess  
+	onUserJoined  
+	onFirstLocalVideoFrame  
+	onFirstRemoteVideoDecoded  
+	onFirstRemoteVideoFrame  
+	
+2. 本地录制和远端的**音频裸数据(PCM)**回调接口，现在支持对数据进行二次修改，并再将数据传输给SDK，涉及的回调接口:  
+	onLocalAudioDataReport  
+	onRemoteAudioDataReport  
+	返回值从 **void** 修改 **byte[]** ，返回空值表示不对原始音频数据做任何修改。  
+	**注意：二次修改操作是同步操作**
+	
+### 新增以下方法
+
+```
+/**
+ * 获取本地录制和播放音频混音后的裸数据
+ *
+ * @param data       PCM数据
+ * @param size       PCM数据长度
+ * @param sampleRate 采样率
+ * @param channels   声道数
+ */
+byte[] onMixedAudioFrame(byte[] data, int size, int sampleRate, int channels);
+    
+/**
+ * 接收歌词信息
+ *
+ * @param uid 歌词发送者的id
+ * @param lyric    歌词内容
+ */
+void onReceiveAudioLyric(long uid, String lyric);
+
+```
+
+## SDK 对象变更
+
+1.**LocalAudioStats** 类新增以下字段：
+ 
+```
+/**
+ * 瞬时值，本地音频流的上行丢包率(百分比小数)
+ */
+private float mAudioLossRate;
+
+/**
+ * 瞬时值，本地音频流的端到端延迟(毫秒)
+ */
+private int mAudioDelay;
+```
+
+2.**LocalVideoStats** 类新增以下字段： 
+
+```
+/**
+ * 瞬时值，本地视频上行端到端延迟(毫秒)
+ */
+private int mDelay;
+```
+
+3.**RemoteAudioStats** 类新增以下字段：
+
+```
+/**
+ * 瞬时值，远端用户音频流的下行丢包率(百分比小数)
+ */
+private float mAudioLossRate;
+
+/**
+ * 瞬时值，远端用户音频流的下行延迟(毫秒)
+ */
+private int mAudioDelay;
+```
+
+4.**RemoteVideoStats** 类新增以下字段：
+
+```
+/**
+ * 瞬时值，本地视频下行丢包率(百分比小数)
+ */
+private float mVideoLossRate;
+```
+
+5.**ScreenRecordConfig** 类修改
+
+* 删除以下字段:  
+
+	```
+	/**
+	 * 设置录屏时音频码率大小。
+	 */
+	public int mRecordAudioBitRate;
+	```
+	该字段的功能现由接口 **setPreferAudioCodec** 代替设置，详细用法参考官网API文档介绍。
+	
+* 新增以下字段:  
+
+	```
+	/**
+	 * 设置录屏时视频的关键帧间隔，单位秒，默认值为1
+	 */
+	public int mRecordIFrameInterval;
+	```
+6.**VideoCompositingLayout** 类新增以下字段：
+
+```
+/**
+ * 设置目标推流地址，画中画布局参数将在该推流地址中生效。仅用于多推流场景下，单推流场景无需关注此字段。
+ */
+public String mStreamUrl;
+```
+
+7.**TTTVideoCanvas** 类，字段 **mShowMode** 删除 **RENDER\_MODE\_ADAPTIVE** 选项
+
+#-------------------------------------------
+
 ### 2.3.0版本
 该版本于2019年8月19日发布。
 ### 新增功能
@@ -213,213 +501,3 @@ public abstract int getCameraFace();
  */
 public abstract int setRemoteDefaultVideoStreamType(int streamType);
 ```
-
-#-------------------------------------------
-
-### 2.4.0版本
-该版本于2019年10月24日发布。
-## API TTTRtcEngine 接口变更
-### 新增以下方法
-```
-/**
- * 停止/恢复音频采集和播放功能
- *
- * @param stop YES: 停止采集和播放  NO: 恢复采集和播放
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int stopAudioPlayAndRecord(boolean stop);
-
-/**
- * 启用/禁用本地和远端音频混音后的裸数据上报，默认禁用
- *
- * @param enabled true代表启用上报，false代表禁用上报
- */
-public abstract void enableMixAudioDataReport(boolean enabled);
-
-/**
- * 设置上报的本地音频裸数据的采样率，声道数和采样点数
- *
- * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
- * @param channel        声道数，最多支持两个声道
- * @param samplesPerCall 采样点数
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int setRecordingAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
-
-/**
- * 设置上报的远端音频裸数据的采样率，声道数和采样点数
- *
- * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
- * @param channel        声道数，最多支持两个声道
- * @param samplesPerCall 采样点数
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int setPlaybackAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
-
-/**
- * 设置上报的本地和远端音频裸数据，经过混音后数据的采样率，声道数和采样点数
- *
- * @param sampleRate     采样率，可设置为 8000，16000，32000，44100 或 48000
- * @param channel        声道数，最多支持两个声道
- * @param samplesPerCall 采样点数
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int setMixedAudioFrameParameters(int sampleRate, int channel, int samplesPerCall);
-
-/**
- * 增加旁路推流地址。SDK 会在本地触发 onRtcPushStatus 回调，报告增加旁路推流地址的状态
- *
- * @param url 旁路推流地址
- * @param transcodingEnabled 是否转码
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int addPublishStreamUrl(String url, boolean transcodingEnabled);
-
-/**
- * 删除旁路推流地址。SDK 会在本地触发 onRtcPushStatus 回调，报告删除旁路推流地址的状态
- * @param url 旁路推流地址
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int removePublishStreamUrl(String url);
-
-/**
- * 设置视频混屏的背景图片，默认是黑色背景。图片源仅支持http协议的网络地址，不支持本地图片路径，图片格式支持主流的jpg，png等<br/>
- * 注意:该接口是多旁路推流功能的版本，单推流的版本无 streamUrl 参数
- *
- * @param url 背景图片所在的地址
- * @param streamUrl 旁路推流地址
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int setVideoMixerBackgroundImgUrl(String url, String streamUrl);
-
-/**
- * 发送伴奏歌曲的歌词信息
- * @param lyric 歌词内容
- *
- * @return 0代表方法调用成功，其他代表失败。see {@link LocalSDKConstants#FUNCTION_SUCCESS}
- */
-public abstract int sendAudioLyric(String lyric);
-
-```
-
-## API TTTRtcEngineEventHandler 回调接口变更
-### 接口变更
-
-1. 以下回调接口列表，会在**参数列表末尾**添加 **int elapsed** 参数，表示当前回调自加入房间起，到触发该回调所用的时间，**单位秒**，例如：
- 
-	```
-	public void onJoinChannelSuccess(String channel, long uid, int elapsed) {
-	```
-	onJoinChannelSuccess  
-	onUserJoined  
-	onFirstLocalVideoFrame  
-	onFirstRemoteVideoDecoded  
-	onFirstRemoteVideoFrame  
-	
-2. 本地录制和远端的**音频裸数据(PCM)**回调接口，现在支持对数据进行二次修改，并再将数据传输给SDK，涉及的回调接口:  
-	onLocalAudioDataReport  
-	onRemoteAudioDataReport  
-	返回值从 **void** 修改 **byte[]** ，返回空值表示不对原始音频数据做任何修改。  
-	**注意：二次修改操作是同步操作**
-	
-### 新增以下方法
-
-```
-/**
- * 获取本地录制和播放音频混音后的裸数据
- *
- * @param data       PCM数据
- * @param size       PCM数据长度
- * @param sampleRate 采样率
- * @param channels   声道数
- */
-byte[] onMixedAudioFrame(byte[] data, int size, int sampleRate, int channels);
-    
-/**
- * 接收歌词信息
- *
- * @param uid 歌词发送者的id
- * @param lyric    歌词内容
- */
-void onReceiveAudioLyric(long uid, String lyric);
-
-```
-
-## SDK 对象变更
-
-1.**LocalAudioStats** 类新增以下字段：
- 
-```
-/**
- * 瞬时值，本地音频流的上行丢包率(百分比小数)
- */
-private float mAudioLossRate;
-
-/**
- * 瞬时值，本地音频流的端到端延迟(毫秒)
- */
-private int mAudioDelay;
-```
-
-2.**LocalVideoStats** 类新增以下字段： 
-
-```
-/**
- * 瞬时值，本地视频上行端到端延迟(毫秒)
- */
-private int mDelay;
-```
-
-3.**RemoteAudioStats** 类新增以下字段：
-
-```
-/**
- * 瞬时值，远端用户音频流的下行丢包率(百分比小数)
- */
-private float mAudioLossRate;
-
-/**
- * 瞬时值，远端用户音频流的下行延迟(毫秒)
- */
-private int mAudioDelay;
-```
-
-4.**RemoteVideoStats** 类新增以下字段：
-
-```
-/**
- * 瞬时值，本地视频下行丢包率(百分比小数)
- */
-private float mVideoLossRate;
-```
-
-5.**ScreenRecordConfig** 类修改
-
-* 删除以下字段:  
-
-	```
-	/**
-	 * 设置录屏时音频码率大小。
-	 */
-	public int mRecordAudioBitRate;
-	```
-	该字段的功能现由接口 **setPreferAudioCodec** 代替设置，详细用法参考官网API文档介绍。
-	
-* 新增以下字段:  
-
-	```
-	/**
-	 * 设置录屏时视频的关键帧间隔，单位秒，默认值为1
-	 */
-	public int mRecordIFrameInterval;
-	```
-6.**VideoCompositingLayout** 类新增以下字段：
-
-```
-/**
- * 设置目标推流地址，画中画布局参数将在该推流地址中生效。仅用于多推流场景下，单推流场景无需关注此字段。
- */
-public String mStreamUrl;
-```
-
-7.**TTTVideoCanvas** 类，字段 **mShowMode** 删除 **RENDER\_MODE\_ADAPTIVE** 选项
