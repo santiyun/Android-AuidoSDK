@@ -18,6 +18,20 @@
 
 ## 三体音视频 SDK 发版说明
 
+### 3.0.3版本
+该版本于 2020.06.20 发布。
+
+1. 添加接口 **enableVideoImproveModule** ，用于控制**视频改进模块**的启用/禁用，默认处于启用状态。
+2、添加接口 **CreateRendererTextureView** 和  **CreateRendererSurfaceView** ，用于创建频改进模块的渲染控件。
+3、调整视频档位参数，720p的推荐帧率降低至24pfs、1010p的推荐帧率降低至15fps。
+
+```
+/**
+ * 直播模式下，主播长时间(默认100秒)无音频或视频上行，推流失败。
+ */
+public static final int ERROR_RTC_PUSH_ERROR = 110;
+```
+
 ### 2.9.7版本
 该版本于 2020.06.09 发布。
 
@@ -27,11 +41,26 @@
 ```
 /**
  * 直播模式下，主播长时间(默认100秒)无音频或视频上行，推流失败。
-*/
+ */
 public static final int ERROR_RTC_PUSH_ERROR = 110;
 ```
 
+### 2.9.6版本
+1、修复屏幕分享需要使用aac音频格式的问题。   
+2、解决一个摄像头机型适配问题，可能会引起本地视频预览黑屏。  
+3、**Constants** 类添加摄像头链接失败错误码。  
 
+```
+/**
+ * 相机链接丢失，系统中断当前相机链接。
+ */
+public static final int ERROR_CAMERA_CONNECT_LOST = 1;
+
+/**
+ * 相机打开失败。
+ */
+public static final int ERROR_CAMERA_CONNECT_FAILED = 2;
+```
 
 ### 2.9.5版本
 该版本于 2020.05.11 发布。
@@ -43,7 +72,7 @@ public static final int ERROR_RTC_PUSH_ERROR = 110;
 1. 移除常量 **Constants.ERROR\_CAMERA\_OPEN\_FAILED**，请参考回调 **onCameraConnectError**。
 
 ### API 变更
-1. 接口 **setVideoMixerParams** 添加质感超清功能参数 **qulityMode** ，详情请参考文档介绍。
+1. 接口 **setVideoMixerParams** 添加智感超清功能参数 **qulityMode** ，详情请参考文档介绍。
 2. 接口 **CreateRendererView** 修改为静态方法。
 
 ## 类 TTTRtcEngineEventHandler 回调 API 变更
